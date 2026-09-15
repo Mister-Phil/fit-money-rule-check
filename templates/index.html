@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Fit Money Rule Check</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    background: #0b0d10;
+    color: #e8e8e8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+  }
+  .card {
+    width: 420px;
+    padding: 32px;
+  }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  .sub { color: #888; font-size: 13px; margin-bottom: 28px; }
+  input, select {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    border: 1px solid #2a2d31;
+    background: #17191c;
+    color: #fff;
+    font-size: 15px;
+  }
+  .toggle-row { display: flex; gap: 8px; margin-bottom: 20px; }
+  .toggle-row button {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #2a2d31;
+    background: #17191c;
+    color: #888;
+    cursor: pointer;
+  }
+  .toggle-row button.active { background: #2a2d31; color: #fff; border-color: #555; }
+  button.submit {
+    width: 100%;
+    padding: 14px;
+    border-radius: 8px;
+    border: none;
+    background: #ffffff;
+    color: #000;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .result {
+    margin-top: 24px;
+    padding: 20px;
+    border-radius: 10px;
+    font-size: 17px;
+    line-height: 1.4;
+    display: none;
+  }
+  .result.garde { background: #10281c; border: 1px solid #1f5c3a; }
+  .result.coupe { background: #2b1414; border: 1px solid #6b2020; }
+  .result.remplace { background: #2a2410; border: 1px solid #6b5820; }
+  .tag { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.5px;
+         padding: 3px 8px; border-radius: 4px; margin-bottom: 8px; }
+  .tag.garde { background: #1f5c3a; }
+  .tag.coupe { background: #6b2020; }
+  .tag.remplace { background: #6b5820; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Fit Money Rule Check</h1>
+    <div class="sub">1 dépense → 1 règle. Pas de dashboard, pas de rapport.</div>
+
+    <input id="item" placeholder="Quoi ? (ex: veste en cuir)" />
+    <input id="montant" type="number" placeholder="Montant ($)" />
+    <select id="categorie">
+      <option value="bouffe">Bouffe</option>
+      <option value="sorties">Sorties</option>
+      <option value="shopping" selected>Shopping</option>
+      <option value="abonnements">Abonnements</option>
+      <option value="transport">Transport</option>
+      <option value="autre">Autre</option>
+    </select>
+
+    <div class="toggle-row">
+      <button id="btn-planifiee" class="active" onclick="setType('planifiee')">Planifiée</button>
+      <button id="btn-impulsive" onclick="setType('impulsive')">Impulsive</button>
+    </div>
+
+    <button class="submit" onclick="check()">Check ma règle</button>
+
+    <div id="result" class="result"></div>
+  </div>
+
+<script>
+  let currentType = "planifiee";
+  function setType(t) {
+    currentType = t;
+    document.getElementById("btn-planifiee").classList.toggle("active", t === "planifiee");
+    document.getElementById("btn-impulsive").classList.toggle("active", t === "impulsive");
+  }
+
+  async function check() {
+    const item = document.getElementById("item").value;
+    const montant = document.getElementById("montant").value;
+    const categorie = document.getElementById("categorie").value;
+
+    const res = await fetch("/evaluate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ item, montant, categorie, type: currentType })
+    });
+    const data = await res.json();
+
+    const el = document.getElementById("result");
+    const cls = data.decision.toLowerCase();
+    el.className = "result " + cls;
+    el.style.display = "block";
+    el.innerHTML = `<span class="tag ${cls}">${data.decision}</span><br>${data.phrase}`;
+  }
+</script>
+</body>
+</html>
